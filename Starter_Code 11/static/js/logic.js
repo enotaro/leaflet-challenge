@@ -7,16 +7,6 @@ d3.json(url).then(function(geoJson) {
     console.log(geoJson)
 });
 
-// Define color code for earthquake depth
-function colorCode(depth) {
-    return depth >= 90 ? 'red':
-           depth >= 70 ? 'tomato':
-           depth >= 50 ? 'orange':
-           depth >= 30 ? 'yellow':
-           depth >= 10 ? 'greenyellow':
-           depth >= 0 ? 'green';
-}
-
 // Create map and initialize layers
 function createMap(earthquakeInfo) {
 
@@ -41,27 +31,6 @@ function createMap(earthquakeInfo) {
 
     L.control.layers(baseLayers, overlays).addTo(myMap);
 
-// Create Legend for Earthquake Depth
-    var myLegend = L.control({position: "bottomright"});
-    
-    myLegend.onAdd = function() {
-        var div = L.DomUtil.create("div", "info legend");
-        var depths = [-10, 10, 30, 50, 70, 90];
-
-        div.innerHTML += "<h3>Earthquake Depth</h3>"
-
-        for (var i = 0; i < depths.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + colorCode(depths[i]) + '"></i> ' +
-                depths[i] + (depths[i + 1] ? '&ndash;' + depths[i + 1] + '<br>' : '+');
-        }
-        return div;
-    };
-
-    myLegend.addTo(myMap);
-  
-}
-
 // Create marker for each earthquake
 function makeMarkers(response) {
 
@@ -84,6 +53,37 @@ function makeMarkers(response) {
     }
     // Add earthquake markers to map
     createMap(L.layerGroup(earthquakeMarkers));
+}
+
+// Define color code for earthquake depth
+function colorCode(depth) {
+    return depth >= 90 ? 'red':
+           depth >= 70 ? 'tomato':
+           depth >= 50 ? 'orange':
+           depth >= 30 ? 'yellow':
+           depth >= 10 ? 'greenyellow':
+           depth >= 0 ? 'green';
+}
+
+// Create Legend for Earthquake Depth
+    var myLegend = L.control({position: "bottomright"});
+    
+    myLegend.onAdd = function() {
+        var div = L.DomUtil.create("div", "info legend");
+        var depths = [-10, 10, 30, 50, 70, 90];
+
+        div.innerHTML += "<h3>Earthquake Depth</h3>"
+
+        for (var i = 0; i < depths.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + colorCode(depths[i]) + '"></i> ' +
+                depths[i] + (depths[i + 1] ? '&ndash;' + depths[i + 1] + '<br>' : '+');
+        }
+        return div;
+    };
+
+    myLegend.addTo(myMap);
+  
 }
 
 // Fetch Geo JSON and call the makeMarkers function
