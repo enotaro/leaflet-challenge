@@ -1,40 +1,74 @@
-let geojsonData = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
-console.log(geojsonData)
+// Define the URL for GeoJSON data
+let url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
+console.log(url)
 
-d3.json(geojsonData).then(function(geoJson) {
+// Fetch GeoJSON data
+d3.json(url).then(function(geoJson) {
     console.log(geoJson)
 });
 
-//Create map 
-function createMap(earthquakes) {
+// Create map and initialize layers
+function createMap(earthquakeInfo) {
 
-    var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     });
 
 
     var baseLayers = {
-        "Street": streetMap
+        "Map": baseMap
     };
 
     var overlays = {
-        "Earthquakes": earthquakes
+        "Earthquakes": earthquakeInfo
     };
 
-    var mymap = L.map('map', {
-        center: [40, -100],
-        zoom: 3.0,
-        layers: [streetMap, earthquakes]
+    var myMap = L.map('map', {
+        center: [38, -98],
+        zoom: 4,
+        layers: [baseMap, earthquakeInfo]
     });
 
-    L.control.layers(baseLayers, overlays).addTo(mymap);
+    L.control.layers(baseLayers, overlays).addTo(myMap);
 
-// Create Legend
-    var info = L.control({
-        position: "bottomright"
-    });
+// Create marker for each earthquake
+function makeMarkers(response) {
+
+    var earthquakes = response.features;
+
+    // Empty list to hold the markers
+    var earthquakeMarkers = [];
+
+    // Loop through earthquake info to make a marker for each earthquake
+    for (let i = 0; i < earthquakes.length; i ++) {
+        var earthquake = earthquakes[i];
+
+        // Make a circle at each earthquake location
+        var earthquakeMarker = L.circle([earthquake.geometry.coordinates[1], earthquake.geometry.coordinates[0]], {
+            fillOpacity:0.5,
+            radius: earthquake.properties.mag * 10000
+        }).bindPopup(`<h1>${earthquake.properties.place}</h1> <h3>Lat: ${earthquake.geometry.coordinates[1]}</h3><h3>Lon: ${earthquake.geometry.coordinates[0]}</h3><h3>Magnitude: ${earthquake.properties.mag}</h3><h3>Depth: ${earthquake.geometry.coordinates[2]}</h3> `)
+
+        earthquakeMarkers.push(earthquakeMarker);
+    }
+    // Add earthquake markers to map
+    createMap(L.layerGroup(earthquakeMarkers));
+}
+
+// Define color code for earthquake depth
+function colorCode(depth) {
+    return depth >= 90 ? 'red':
+           depth >= 70 ? 'tomato':
+           depth >= 50 ? 'orange':
+           depth >= 30 ? 'yellow':
+           depth >= 10 ? 'greenyellow':
+           depth >= 0 ? 'green';
+}
+
+// Create Legend for Earthquake Depth
+    var myLegend = L.control({position: "bottomright"});
     
-    info.onAdd = function() {
+    myLegend.onAdd = function() {
         var div = L.DomUtil.create("div", "info legend");
         var depths = [-10, 10, 30, 50, 70, 90];
 
@@ -42,74 +76,17 @@ function createMap(earthquakes) {
 
         for (var i = 0; i < depths.length; i++) {
             div.innerHTML +=
-                '<i style="background:' + getColor(depths[i]) + '"></i> ' +
+                '<i style="background:' + colorCode(depths[i]) + '"></i> ' +
                 depths[i] + (depths[i + 1] ? '&ndash;' + depths[i + 1] + '<br>' : '+');
         }
         return div;
     };
 
-    info.addTo(mymap);
+    myLegend.addTo(myMap);
   
 }
 
-// Color Sqaures
-function getColor(d) {
-    return d >= 90 ? 'rgb(168, 9, 9)' :
-           d >= 70  ? 'rgb(238, 104, 55)' :
-           d >= 50  ? 'orange' :
-           d >= 30  ? 'yellow' :
-           d >= 10   ? 'greenyellow' :
-                      'green';
-}
-
-// Color Selection 
-function markerColor(depth) {
-    if (depth <10 ) {
-        color = "green"
-    }
-    else if (depth >= 10 && depth <= 30) {
-        color = "greenyellow"
-    }
-    else if (depth > 30 && depth <= 50) {
-        color = "yellow"
-    }
-    else if (depth > 50 && depth <= 70) {
-        color = "orange"
-    }
-    else if (depth > 70 && depth <= 90) {
-        color = "darkorange"
-    }
-    else if (depth > 90) {
-        color = "red"
-    }
-    
-    return color
-}
-
-// Create Each Marker
-function createMarkers(response) {
-
-    var quakes = response.features;
-
-    var quakeMarkers = [];
-
-    for (let i = 0; i < quakes.length; i ++) {
-        var quake = quakes[i];
-
-        var quakeMarker = L.circle([quake.geometry.coordinates[1], quake.geometry.coordinates[0]], {
-            color:markerColor(quake.geometry.coordinates[2]),
-            fillColor:markerColor(quake.geometry.coordinates[2]),
-            fillOpacity:0.5,
-            radius:quake.properties.mag * 10000
-        }).bindPopup(`<h1>${quake.properties.place}</h1> <h3>Lat: ${quake.geometry.coordinates[1]}</h3><h3>Lon: ${quake.geometry.coordinates[0]}</h3><h3>Magnitude: ${quake.properties.mag}</h3><h3>Depth: ${quake.geometry.coordinates[2]}</h3> `)
-
-        quakeMarkers.push(quakeMarker);
-    }
-
-    createMap(L.layerGroup(quakeMarkers));
-}
-
-//API request and createMarkers function call
-d3.json(geojsonData).then(function(data) {
-    createMarkers(data);
+// Fetch Geo JSON and call the makeMarkers function
+d3.json(url).then(function(data) {
+    makeMarkers(data);
 });
