@@ -9,12 +9,12 @@ d3.json(url).then(function(geoJson) {console.log(geoJson)});
 
 // Create color code based on depth of each earthquake
 function colorCode(earthquakeDepth) {
-    return earthquakeDepth >= 90 ? 'red' :
-    earthquakeDepth >= 70  ? 'tomato' :
-    earthquakeDepth >= 50  ? 'orange' :
-    earthquakeDepth >= 30  ? 'yellow' :
-    earthquakeDepth >= 10   ? 'greenyellow' :
-                      'green';
+    return earthquakeDepth >= 90 ? 'red':
+    earthquakeDepth >= 70 ? 'tomato':
+    earthquakeDepth >= 50 ? 'orange':
+    earthquakeDepth >= 30 ? 'yellow':
+    earthquakeDepth >= 10 ? 'greenyellow':
+                            'green';
 }
 
 // Create a Leaflet map to display earthquake data
